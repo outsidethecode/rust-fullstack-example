@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Deserialize, Clone, PartialEq, Debug)]
 pub struct Owner {
@@ -6,9 +7,39 @@ pub struct Owner {
     pub name: String,
 }
 
+#[derive(Deserialize, Clone, PartialEq, Debug)]
+pub struct User {
+    pub id: i32,
+    pub username: String,
+    // pub accumulator: HashMap<u8,u8>,
+    // pub pubKey: HashMap<u8,u8>,
+    // pub witnesses: Vec<HashMap<u8,u8>>,
+    // pub params: HashMap<u8,u8>
+}
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct OwnerRequest {
     pub name: String,
+}
+
+// #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+// pub struct Uint8ArrayJsonObject {
+//     entries: 
+// }
+
+// #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+// pub struct Uint8ArrayEntry {
+//     key: String,
+//     value: String
+// }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+pub struct SignupRequest {
+    pub username: String,
+    pub accumulator: HashMap<u8,u8>,
+    pub pubKey: HashMap<u8,u8>,
+    pub witnesses: Vec<HashMap<u8,u8>>,
+    pub params: HashMap<u8,u8>
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
@@ -22,6 +53,21 @@ impl OwnerResponse {
         OwnerResponse {
             id: owner.id,
             name: owner.name,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+pub struct SignupResponse {
+    pub id: i32,
+    pub username: String,
+}
+
+impl SignupResponse {
+    pub fn of(user: User) -> SignupResponse {
+        SignupResponse {
+            id: user.id,
+            username: user.username,
         }
     }
 }

@@ -14,3 +14,9 @@ CREATE TABLE IF NOT EXISTS pet
 
     CONSTRAINT fk_pet_owner_id FOREIGN KEY (owner_id) REFERENCES pet(id)
 );
+
+CREATE TABLE IF NOT EXISTS user
+(
+    id SERIAL PRIMARY KEY NOT NULL,
+    username VARCHAR(255) NOT NULL
+);

@@ -51,3 +51,12 @@ pub async fn create_owner_handler(body: OwnerRequest, db_pool: DBPool) -> Result
             .map_err(reject::custom)?,
     )))
 }
+
+pub async fn signup_handler(body: SignupRequest, db_pool: DBPool) -> Result<impl Reply> {
+    
+    Ok(json(&SignupResponse::of(
+        db::user::create(&db_pool, body)
+            .await
+            .map_err(reject::custom)?,
+    )))
+}

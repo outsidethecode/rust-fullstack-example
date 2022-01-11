@@ -1,5 +1,6 @@
 pub mod owner;
 pub mod pet;
+pub mod user;
 
 use crate::{error, error::Error::*, DBCon, DBPool};
 use mobc::Pool;
