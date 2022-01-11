@@ -81,11 +81,10 @@ impl Component for CreateForm {
 
                 let task = FetchService::fetch(req, cb).expect("can create task");
                 self.fetch_task = Some(task);
-                ()
             }
             Msg::Resp(resp) => {
                 ConsoleService::info(&format!("owner created: {:?}", resp));
-                if let Ok(_) = resp {
+                if resp.is_ok() {
                     RouteAgent::dispatcher().send(RouteRequest::ChangeRoute(Route {
                         route: "/".to_string(),
                         state: (),

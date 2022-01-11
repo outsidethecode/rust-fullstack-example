@@ -112,11 +112,10 @@ impl Component for CreateForm {
 
                 let task = FetchService::fetch(req, cb).expect("can create task");
                 self.fetch_task = Some(task);
-                ()
             }
             Msg::Resp(resp) => {
                 ConsoleService::info(&format!("pet created: {:?}", resp));
-                if let Ok(_) = resp {
+                if resp.is_ok() {
                     RouteAgent::dispatcher().send(RouteRequest::ChangeRoute(Route {
                         route: format!("/app/{}", self.props.owner_id),
                         state: (),

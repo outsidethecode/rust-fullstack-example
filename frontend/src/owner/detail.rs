@@ -128,7 +128,6 @@ impl Component for Detail {
 
                 let task = FetchService::fetch(req, cb).expect("can create task");
                 self.fetch_pets_task = Some(task);
-                ()
             }
             Msg::MakeOwnerReq(id) => {
                 let req = Request::get(&format!("http://localhost:8000/owner/{}", id))
@@ -144,7 +143,6 @@ impl Component for Detail {
 
                 let task = FetchService::fetch(req, cb).expect("can create task");
                 self.fetch_owner_task = Some(task);
-                ()
             }
             Msg::MakeDeletePetReq(owner_id, pet_id) => {
                 let req = Request::delete(&format!(
@@ -162,7 +160,6 @@ impl Component for Detail {
 
                 let task = FetchService::fetch(req, cb).expect("can create task");
                 self.delete_pet_task = Some(task);
-                ()
             }
             Msg::RespPets(resp) => {
                 if let Ok(data) = resp {
@@ -179,7 +176,7 @@ impl Component for Detail {
                     self.pets = self
                         .pets
                         .as_ref()
-                        .map(|pets| pets.into_iter().filter(|p| p.id != id).cloned().collect());
+                        .map(|pets| pets.iter().filter(|p| p.id != id).cloned().collect());
                 }
             }
         }

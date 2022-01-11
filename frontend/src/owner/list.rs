@@ -79,7 +79,6 @@ impl Component for List {
 
                 let task = FetchService::fetch(req, cb).expect("can create task");
                 self.fetch_task = Some(task);
-                ()
             }
             Msg::Resp(resp) => {
                 if let Ok(data) = resp {

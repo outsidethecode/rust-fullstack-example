@@ -5,7 +5,7 @@ clean:
 	@cargo clean
 
 web:
-	@RUSTFLAGS= trunk serve
+	@RUSTFLAGS=  trunk serve
 
 docs: build
 	@cargo doc --no-deps
