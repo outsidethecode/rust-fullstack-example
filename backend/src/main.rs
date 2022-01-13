@@ -27,12 +27,19 @@ async fn main() {
     let pet_param = warp::path!("owner" / i32 / "pet" / i32);
     let owner = warp::path("owner");
     let signup = warp::path("signup");
+    let signin = warp::path("signin");
 
     let signup_routes = signup
         .and(warp::post())
         .and(warp::body::json())
         .and(with_db(db_pool.clone()))
         .and_then(handler::signup_handler);
+
+    let signin_routes = signin
+        .and(warp::post())
+        .and(warp::body::json())
+        .and(with_db(db_pool.clone()))
+        .and_then(handler::signin_handler);
 
     let pet_routes = pet
         .and(warp::get())
@@ -66,6 +73,7 @@ async fn main() {
     let routes = pet_routes
         .or(owner_routes)
         .or(signup_routes)
+        .or(signin_routes)
         .recover(error::handle_rejection)
         .with(
             warp::cors()

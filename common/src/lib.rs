@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 use std::collections::HashMap;
 
 #[derive(Deserialize, Clone, PartialEq, Debug)]
@@ -11,10 +11,10 @@ pub struct Owner {
 pub struct User {
     pub id: i32,
     pub username: String,
-    // pub accumulator: HashMap<u8,u8>,
-    // pub pubKey: HashMap<u8,u8>,
-    // pub witnesses: Vec<HashMap<u8,u8>>,
-    // pub params: HashMap<u8,u8>
+    pub accumulator: String,
+    pub pub_key: String,
+    pub witnesses: String,
+    pub params: String
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
@@ -36,11 +36,30 @@ pub struct OwnerRequest {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct SignupRequest {
     pub username: String,
-    pub accumulator: HashMap<u8,u8>,
-    pub pubKey: HashMap<u8,u8>,
-    pub witnesses: Vec<HashMap<u8,u8>>,
-    pub params: HashMap<u8,u8>
+    pub accumulator: String,
+    pub pub_key: String,
+    pub witnesses: String,
+    pub params: String
 }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+pub struct SigninRequest {
+    pub username: String,
+    pub password: String,
+}
+
+// impl Serialize for SignupRequest {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         let mut map = serializer.serialize_map(Some(self.params.len()))?;
+//         for (k, v) in &self.params {
+//             map.serialize_entry(&k.to_string(), &v)?;
+//         }
+//         map.end()
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct OwnerResponse {
