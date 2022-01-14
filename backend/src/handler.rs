@@ -8,14 +8,14 @@ use common::*;
 use warp::{http::StatusCode, reject, reply::json, Reply};
 use base64::{decode as base64decode};
 use std::str;
-use ark_bls12_381::{Bls12_381, G1Affine};
+use ark_bls12_381::{Bls12_381, G1Affine, G2Affine};
 use blake2::Blake2b;
 // use digest::{BlockInput, Digest as Digest2, FixedOutput, Reset, Update};
 
 // use ark_bls12_381::{Bls12_381, G1Affine};
 //use bls12_381::*;
 
-use ark_ec::{models::{ModelParameters, SWModelParameters}, PairingEngine, short_weierstrass_jacobian::*};
+use ark_ec::{AffineCurve, models::{ModelParameters, SWModelParameters}, PairingEngine, short_weierstrass_jacobian::*};
 
 use ark_serialize::{
     CanonicalDeserialize, CanonicalDeserializeWithFlags, CanonicalSerialize,
@@ -24,11 +24,12 @@ use ark_serialize::{
 use serde::Deserialize;
 
 
-use vb_accumulator::setup::{Keypair, SetupParams};
+use vb_accumulator::setup::{Keypair, PublicKey, SetupParams};
 use vb_accumulator::positive::{PositiveAccumulator, Accumulator};
 use vb_accumulator::persistence::State;
 use vb_accumulator::witness::MembershipWitness;
 use ark_bls12_381::Fr as BlsScalar;
+use ark_ff::fields::PrimeField;
 
 pub async fn list_pets_handler(owner_id: i32, db_pool: DBPool) -> Result<impl Reply> {
     let pets = db::pet::fetch(&db_pool, owner_id)
@@ -126,23 +127,72 @@ pub async fn signin_handler(body: SigninRequest, db_pool: DBPool) -> Result<impl
         k=k+1;
     }
 
-    // let mut pub_key_bytes: [u8; 96] = [0; 96];
-    // let mut decoded_pub_key_elements = decoded_pub_key.split(",");
-    // let mut i=0;
-    // for s in decoded_pub_key_elements {
-    //     pub_key_bytes[i] = s.parse::<u8>().unwrap();
-    //     i=i+1;
-    // }
+    let mut decoded_witnesses_vec: Vec<&str> = decoded_witnesses.split(",").collect();
+    let witnesses_count = decoded_witnesses_vec.len()/32;
+    let mut witnesses_vec = Vec::new();
 
+    for x in 0..witnesses_count {
+        let mut l= x * 32;
+        let mut witness_bytes: [u8; 32] = [0; 32];
+        for y in 0..32 {
+            witness_bytes[y] = decoded_witnesses_vec[l].parse::<u8>().unwrap();
+            l=l+1;
+        }
+        witnesses_vec.push(witness_bytes);
+    }
+
+    let password = String::from_utf8(base64decode(body.password).unwrap().clone()).unwrap();
+
+    let mut password_bytes: [u8; 32] = [0; 32];
+    let mut decoded_password_elements = password.split(",");
+    let mut m=0;
+    for s in decoded_password_elements {
+        password_bytes[m] = s.parse::<u8>().unwrap();
+        m=m+1;
+    }
+
+
+    // --------------------------
+
+    let mut acc: &[u8] = &accumulator_bytes;
+    let mut pk: &[u8] = &pub_key_bytes;
+
+    let params = SetupParams::<Bls12_381>::new::<Blake2b>(&params_bytes);
+    let pub_key = <PublicKey<G2Affine> as CanonicalDeserialize>::deserialize(pk).unwrap();
+    let verifyAccumulator: PositiveAccumulator<Bls12_381> = PositiveAccumulator::from_accumulated(GroupAffine::deserialize(acc).unwrap());
+
+    // --------------------------
+
+    // type Fr = <Bls12_381 as PairingEngine>::Fr;
+    // let elem = Fr::deserialize(acc);
+    let elem = BlsScalar::from_le_bytes_mod_order(&password_bytes); // THIS LOOK UGLY
+
+    // --------------------------
+
+
+    let mut found = false;
+
+    for x in 0..witnesses_count {
+        let mut witness_bytes: [u8; 32] = witnesses_vec[x];
+        let mut witness: &[u8] = &witness_bytes;
+        let witness_membership = <MembershipWitness<G1Affine> as CanonicalDeserialize>::deserialize(witness).unwrap();
+
+        if verifyAccumulator.verify_membership(&elem, &witness_membership ,&pub_key, &params) {
+            found = true;
+            break;
+        }
+    }
+
+    if found {
+        Ok(StatusCode::OK)
+    } else {
+        Ok(StatusCode::FORBIDDEN)
+    }
     //let params = SetupParams::<Bls12_381>::generate_using_rng(&mut rng);
     //let g1 = <Bls12_381 as PairingEngine>::G1Projective::rand(&mut rng).into_affine();
     //let params1 = SetupParams::<Bls12_381>::generate_using_rng(&mut rng);
 
-
-    let params = SetupParams::<Bls12_381>::new::<Blake2b>(&params_bytes);
-
-
-    let original_accumulator:PositiveAccumulator<Bls12_381> = PositiveAccumulator::initialize(&params);
+    // let original_accumulator:PositiveAccumulator<Bls12_381> = PositiveAccumulator::initialize(&params);
 
     // let g1affine = <AffineCurve as G1Affine>::from_compressed(&accumulator_bytes).unwrap();
     //let g1affine = G1Affine::from_compressed(&accumulator_bytes).unwrap();
@@ -152,53 +202,7 @@ pub async fn signin_handler(body: SigninRequest, db_pool: DBPool) -> Result<impl
     //let g1 = AffineCurve::fromBytes();
     // let aaa = PositiveAccumulator::from_accumulated()deserialize().deserialize()_from();
 
-    let mut acc: &[u8] = &accumulator_bytes;
-    let mut witness: &[u8] = &accumulator_bytes;
-
-    let verifyAccumulator: PositiveAccumulator<Bls12_381> = PositiveAccumulator::from_accumulated(GroupAffine::deserialize(acc).unwrap());
-    //accumulator.verify_membership()
-    //pub type G1Affine = GroupAffine<>;
-
-    let found = false;
-    type Fr = <Bls12_381 as PairingEngine>::Fr;
 
 
-    let elem = Fr::deserialize(acc);
-
-    let witns = MembershipWitness::deserialize(acc).unwrap();
-    let elem = BlsScalar::from_le_bytes_mod_order(&acc); // THIS LOOK UGLY
-
-    verifyAccumulator.verify_membership(&elem, &witns ,ddd, &params);
-
-
-
-    //verifyAccumulator.get_membership_witness(AffineCurve::)
-    // let encodedPassword;
-    //TODO
-    // for (let i = 0; i < 3; i++) {
-    //     // try {
-    //     //     if (verifyAccumulator.verify_membership(encodedPassword, new MembershipWitness(fromObject(user.witnesses[i])), fromObject(user.pubKey), params)) {
-    //     //         found = true;
-    //     //         break;
-    //     //     }
-    //     // } catch (e: unknown) {
-    //     //     console.log("Something wrong");
-    //     //     console.log(e);
-    //     //     if (e instanceof Error) {
-    //     //         console.log(e.message);
-    //     //     }
-    //     // }
-    // }
-
-    if (!found) {
-        // return res.status(401).send("Login failed");
-    }
-
-
-
-    Ok(StatusCode::OK)
 }
 
-fn pop(barry: &[u8]) -> &[u8; 48] {
-    barry.try_into().expect("slice with incorrect length")
-}

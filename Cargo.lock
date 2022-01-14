@@ -168,6 +168,7 @@ version = "0.1.0"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
+ "ark-ff",
  "ark-serialize",
  "base64",
  "blake2",
