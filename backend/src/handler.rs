@@ -8,26 +8,27 @@ use common::*;
 use warp::{http::StatusCode, reject, reply::json, Reply};
 use base64::{decode as base64decode};
 use std::str;
-use ark_bls12_381::Bls12_381;
+use ark_bls12_381::{Bls12_381, G1Affine};
 use blake2::Blake2b;
 // use digest::{BlockInput, Digest as Digest2, FixedOutput, Reset, Update};
 
 // use ark_bls12_381::{Bls12_381, G1Affine};
 //use bls12_381::*;
 
-use ark_ec::{
-    models::{ModelParameters, SWModelParameters},
-    short_weierstrass_jacobian::*,
-};
+use ark_ec::{models::{ModelParameters, SWModelParameters}, PairingEngine, short_weierstrass_jacobian::*};
 
 use ark_serialize::{
     CanonicalDeserialize, CanonicalDeserializeWithFlags, CanonicalSerialize,
     CanonicalSerializeWithFlags, SWFlags, SerializationError,
 };
+use serde::Deserialize;
+
 
 use vb_accumulator::setup::{Keypair, SetupParams};
 use vb_accumulator::positive::{PositiveAccumulator, Accumulator};
 use vb_accumulator::persistence::State;
+use vb_accumulator::witness::MembershipWitness;
+use ark_bls12_381::Fr as BlsScalar;
 
 pub async fn list_pets_handler(owner_id: i32, db_pool: DBPool) -> Result<impl Reply> {
     let pets = db::pet::fetch(&db_pool, owner_id)
@@ -152,30 +153,45 @@ pub async fn signin_handler(body: SigninRequest, db_pool: DBPool) -> Result<impl
     // let aaa = PositiveAccumulator::from_accumulated()deserialize().deserialize()_from();
 
     let mut acc: &[u8] = &accumulator_bytes;
-    let verifAccumulator: PositiveAccumulator<Bls12_381> = PositiveAccumulator::from_accumulated(GroupAffine::deserialize(acc).unwrap());
+    let mut witness: &[u8] = &accumulator_bytes;
+
+    let verifyAccumulator: PositiveAccumulator<Bls12_381> = PositiveAccumulator::from_accumulated(GroupAffine::deserialize(acc).unwrap());
     //accumulator.verify_membership()
     //pub type G1Affine = GroupAffine<>;
 
     let found = false;
-    let encodedPassword;
+    type Fr = <Bls12_381 as PairingEngine>::Fr;
+
+
+    let elem = Fr::deserialize(acc);
+
+    let witns = MembershipWitness::deserialize(acc).unwrap();
+    let elem = BlsScalar::from_le_bytes_mod_order(&acc); // THIS LOOK UGLY
+
+    verifyAccumulator.verify_membership(&elem, &witns ,ddd, &params);
+
+
+
+    //verifyAccumulator.get_membership_witness(AffineCurve::)
+    // let encodedPassword;
     //TODO
-    for (let i = 0; i < 3; i++) {
-        try {
-            if (verifAccumulator.verify_membership(encodedPassword, new MembershipWitness(fromObject(user.witnesses[i])), fromObject(user.pubKey), params)) {
-                found = true;
-                break;
-            }
-        } catch (e: unknown) {
-            console.log("Something wrong");
-            console.log(e);
-            if (e instanceof Error) {
-                console.log(e.message);
-            }
-        }
-    }
+    // for (let i = 0; i < 3; i++) {
+    //     // try {
+    //     //     if (verifyAccumulator.verify_membership(encodedPassword, new MembershipWitness(fromObject(user.witnesses[i])), fromObject(user.pubKey), params)) {
+    //     //         found = true;
+    //     //         break;
+    //     //     }
+    //     // } catch (e: unknown) {
+    //     //     console.log("Something wrong");
+    //     //     console.log(e);
+    //     //     if (e instanceof Error) {
+    //     //         console.log(e.message);
+    //     //     }
+    //     // }
+    // }
 
     if (!found) {
-        return res.status(401).send("Login failed");
+        // return res.status(401).send("Login failed");
     }
 
 
