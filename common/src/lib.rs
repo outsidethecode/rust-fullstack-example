@@ -1,5 +1,4 @@
-use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Clone, PartialEq, Debug)]
 pub struct Owner {
