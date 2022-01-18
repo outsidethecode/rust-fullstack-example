@@ -170,6 +170,7 @@ dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-serialize",
+ "ark-std",
  "base64",
  "blake2",
  "bls12_381",
